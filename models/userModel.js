@@ -23,6 +23,14 @@ const userSchema = new mongoose.Schema({
 		type: String,
 		default: null,
 	},
+	emailVerificationToken: {
+		type: String,
+		required: [true, "Verify token is required"],
+	},
+	isEmailVerified: {
+		type: Boolean,
+		default: false,
+	},
 });
 
 const User = mongoose.model("User", userSchema);
