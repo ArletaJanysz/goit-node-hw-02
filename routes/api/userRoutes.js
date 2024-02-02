@@ -2,9 +2,10 @@ import path from "path";
 import { promises as fsPromises } from "fs";
 import { v4 as uuidv4 } from "uuid";
 import Jimp from "jimp";
-import User from "../models/userModel.js";
+import User from "../../models/userModel.js";
 import dotenv from "dotenv";
 import { sendVerificationEmail } from "../services/sendgridService.js";
+import sgMail from "@sendgrid/mail";
 
 dotenv.config();
 
@@ -84,17 +85,26 @@ const resendVerificationEmail = async (req, res, next) => {
 			return res.status(404).json({ message: "User not found" });
 		}
 
-		if (user.isEmailVerified) {
+		if (user.verify) {
 			return res
 				.status(400)
 				.json({ message: "Verification has already been passed" });
 		}
 
 		const newVerificationToken = uuidv4();
-		user.emailVerificationToken = newVerificationToken;
+		user.verificationToken = newVerificationToken;
 		await user.save();
 
-		sendVerificationEmail(email, newVerificationToken, sendgridApiKey);
+		sgMail.setApiKey(sendgridApiKey);
+
+		const msg = {
+			to: email,
+			from: "arleta.janysz@gmail.com",
+			subject: "Email Verification",
+			text: `Click the following link to verify your email: http://your-api-url/users/verify/${newVerificationToken}`,
+		};
+
+		await sgMail.send(msg);
 
 		res.status(200).json({ message: "Verification email sent" });
 	} catch (error) {
