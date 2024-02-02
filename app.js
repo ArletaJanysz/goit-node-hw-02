@@ -17,24 +17,24 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
-app.use("/avatars", express.static("public/avatars"));
+app.use("/avatars", express.static("/avatars"));
 
 app.patch(
-	"/users/avatars",
+	"/public/avatars",
 	authenticateUser,
 	upload.single("avatar"),
 	uploadAvatar
 );
 
 app.use("/api/contacts", authenticateUser, contactsRouter);
-app.use("/api/users", usersRouter);
+app.use("/api/userRoutes", usersRouter);
 
 app.use((req, res) => {
-	res.status(404).json({ message: "Not found" });
+  res.status(404).json({ message: "Not found" });
 });
 
 app.use((err, req, res, next) => {
-	res.status(500).json({ message: err.message });
+  res.status(500).json({ message: err.message });
 });
 
 export { app };
