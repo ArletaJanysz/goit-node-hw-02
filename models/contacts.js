@@ -1,42 +1,114 @@
-import Contact from "./contactModel.js";
+// models/contacts.js
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+const { Schema } = mongoose;
 
-const listContacts = async () => {
-	return Contact.find();
+dotenv.config();
+
+const { DB_CONNECTION_STRING } = process.env;
+
+mongoose.connect(DB_CONNECTION_STRING, {
+	useNewUrlParser: true,
+	useUnifiedTopology: true,
+	ssl: false,
+});
+
+const db = mongoose.connection;
+
+db.on("error", (err) => {
+	console.error(`Error connecting to MongoDB: ${err}`);
+	process.exit(1);
+});
+
+db.once("open", () => {
+	console.log("Database connection successful");
+});
+
+const contactSchema = new Schema({
+	name: {
+		type: String,
+		required: [true, "Set name for contact"],
+	},
+	email: {
+		type: String,
+	},
+	phone: {
+		type: String,
+	},
+	favorite: {
+		type: Boolean,
+		default: false,
+	},
+	owner: {
+		type: Schema.Types.ObjectId,
+		ref: "User",
+	},
+});
+
+const Contact = mongoose.model("Contact", contactSchema);
+
+const listContacts = async (page = 1, limit = 20, filters = {}) => {
+	try {
+		const skip = (page - 1) * limit;
+		const contacts = await Contact.find(filters).skip(skip).limit(limit);
+		return contacts;
+	} catch (error) {
+		console.error(`Error listing contacts: ${error.message}`);
+		throw new Error("Error listing contacts");
+	}
 };
 
 const getContactById = async (contactId) => {
-	return Contact.findById(contactId);
+	try {
+		return await Contact.findById(contactId);
+	} catch (error) {
+		throw new Error(`Error getting contact by ID: ${error.message}`);
+	}
 };
 
 const removeContact = async (contactId) => {
-	return Contact.findByIdAndDelete(contactId);
+	try {
+		await Contact.findByIdAndRemove(contactId);
+	} catch (error) {
+		throw new Error(`Error removing contact: ${error.message}`);
+	}
 };
 
 const addContact = async (body) => {
-	return Contact.create(body);
+	try {
+		return await Contact.create(body);
+	} catch (error) {
+		throw new Error(`Error adding contact: ${error.message}`);
+	}
 };
 
 const updateContact = async (contactId, body) => {
-	return Contact.findByIdAndUpdate(contactId, body, { new: true });
+	try {
+		return await Contact.findByIdAndUpdate(contactId, body, { new: true });
+	} catch (error) {
+		throw new Error(`Error updating contact: ${error.message}`);
+	}
 };
 
 const updateStatusContact = async (contactId, body) => {
-	const { favorite } = body;
+	try {
+		if (!body.favorite) {
+			throw new Error("missing field favorite");
+		}
 
-	if (favorite === undefined) {
-		throw new Error("missing field favorite");
-	}
+		const updatedContact = await Contact.findByIdAndUpdate(
+			contactId,
+			{ favorite: body.favorite },
+			{ new: true }
+		);
 
-	const contact = await Contact.findByIdAndUpdate(
-		contactId,
-		{ favorite },
-		{ new: true }
-	);
+		if (!updatedContact) {
+			throw new Error("Contact not found");
+		}
 
-	if (contact) {
-		return contact;
-	} else {
-		throw new Error("Not found");
+		return updatedContact;
+	} catch (error) {
+		throw new Error(`Error updating contact status: ${error.message}`);
 	}
 };
 
