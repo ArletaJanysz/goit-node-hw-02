@@ -1,40 +1,46 @@
+// app.js
 import express from "express";
-import logger from "morgan";
-import cors from "cors";
-import multer from "multer";
-import { uploadAvatar } from "./routes/api/users.js";
+import dotenv from "dotenv";
 import contactsRouter from "./routes/api/contacts.js";
 import usersRouter from "./routes/api/users.js";
-import { authenticateUser } from "./middleware/authMiddleware.js";
+import path from "path";
+import multer from "multer";
+
+dotenv.config();
 
 const app = express();
-const formatsLogger = app.get("env") === "development" ? "dev" : "short";
+const PORT = 3000;
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-app.use(logger(formatsLogger));
-app.use(cors());
-app.use(express.json());
-
-app.use("/avatars", express.static("/avatars"));
-
-app.patch(
-	"/public/avatars",
-	authenticateUser,
-	upload.single("avatar"),
-	uploadAvatar
-);
-
-app.use("/api/contacts", authenticateUser, contactsRouter);
-app.use("/api/userRoutes", usersRouter);
-
-app.use((req, res) => {
-  res.status(404).json({ message: "Not found" });
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		cb(null, "tmp");
+	},
+	filename: (req, file, cb) => {
+		cb(null, Date.now() + path.extname(file.originalname));
+	},
 });
 
-app.use((err, req, res, next) => {
-  res.status(500).json({ message: err.message });
+const upload = multer({ storage: storage });
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const currentModuleFile = new URL(import.meta.url).pathname;
+const currentModuleDir = path.dirname(currentModuleFile);
+app.use(
+	"/avatars",
+	express.static(path.join(currentModuleDir, "public", "avatars"))
+);
+
+app.patch("/api/users/avatars", upload.single("avatar"), (req, res) => {
+	res.status(200).json({ message: "Avatar uploaded successfully" });
+});
+
+app.use("/api/contacts", contactsRouter);
+app.use("/api/users", usersRouter);
+
+app.listen(PORT, () => {
+	console.log(`Server is running. Use the API on port: ${PORT}`);
 });
 
 export { app };
