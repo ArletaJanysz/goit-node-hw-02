@@ -39,8 +39,5 @@ app.patch("/api/users/avatars", upload.single("avatar"), (req, res) => {
 app.use("/api/contacts", contactsRouter);
 app.use("/api/users", usersRouter);
 
-app.listen(PORT, () => {
-	console.log(`Server is running. Use the API on port: ${PORT}`);
-});
 
 export { app };
