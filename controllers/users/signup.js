@@ -39,7 +39,7 @@ async function signup(req, res) {
 		const verificationLink = `${process.env.BASE_URL}/api/users/verify/${verificationToken}`;
 		const msg = {
 			to: newUser.email,
-			from: "kaczorowska.karolina@gmail.com",
+			from: "arleta.janysz@gmail.com",
 			subject: "Email Verification",
 			text: `Click on the following link to verify your email: ${verificationLink}`,
 			html: `<p>Click <a href="${verificationLink}">here</a> to verify your email.</p>`,
