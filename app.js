@@ -5,8 +5,12 @@ import contactsRouter from "./routes/api/contacts.js";
 import usersRouter from "./routes/api/users.js";
 import path from "path";
 import multer from "multer";
+import sgMail from "@sendgrid/mail";
 
 dotenv.config();
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 
 const app = express();
 const PORT = 3000;
